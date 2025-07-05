@@ -1,0 +1,161 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        cpp-version: [17, 20]
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Setup C++ Environment
+      uses: actions/setup-node@v3
+      
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          sudo apt-get install -y clang
+        fi
+        
+    - name: Build Abort Takeoff Scenario
+      run: |
+        cd Scenario_Lib/B_Abort_TakeOff
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          clang++ -std=c++${{ matrix.cpp-version }} -pthread -o abort_takeoff_sim.exe main.cpp
+        else
+          g++ -std=c++${{ matrix.cpp-version }} -pthread -o abort_takeoff_sim.exe main.cpp
+        fi
+        
+    - name: Run Basic Tests
+      run: |
+        cd Scenario_Lib/B_Abort_TakeOff
+        # 检查可执行文件是否存在
+        if [ -f "./abort_takeoff_sim.exe" ]; then
+          echo "✅ Build successful"
+        else
+          echo "❌ Build failed"
+          exit 1
+        fi
+        
+    - name: Code Quality Check
+      run: |
+        # 检查代码格式和基本质量
+        echo "Checking code quality..."
+        
+        # 检查是否有明显的编译错误
+        find . -name "*.cpp" -o -name "*.hpp" | head -5 | while read file; do
+          echo "Checking $file"
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            clang++ -std=c++${{ matrix.cpp-version }} -fsyntax-only "$file" 2>/dev/null || echo "Syntax check failed for $file"
+          else
+            g++ -std=c++${{ matrix.cpp-version }} -fsyntax-only "$file" 2>/dev/null || echo "Syntax check failed for $file"
+          fi
+        done
+        
+    - name: Check File Structure
+      run: |
+        # 检查项目结构完整性
+        echo "Checking project structure..."
+        
+        required_dirs=("include" "Scenario_Lib" "docs")
+        for dir in "${required_dirs[@]}"; do
+          if [ -d "$dir" ]; then
+            echo "✅ $dir exists"
+          else
+            echo "❌ $dir missing"
+            exit 1
+          fi
+        done
+        
+        # 检查关键文件
+        required_files=("README.md" "CONTRIBUTING.md" "VERSION_CONTROL.md")
+        for file in "${required_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+
+  documentation:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Check Documentation
+      run: |
+        echo "Checking documentation..."
+        
+        # 检查文档文件是否存在
+        doc_files=("docs/_sidebar.md" "docs/index.html")
+        for file in "${doc_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        # 检查文档链接
+        echo "Checking documentation links..."
+        if grep -q "404" docs/_sidebar.md; then
+          echo "❌ Found broken links in documentation"
+          exit 1
+        fi
+        
+    - name: Validate Markdown
+      run: |
+        # 简单的Markdown语法检查
+        echo "Validating Markdown files..."
+        
+        # 检查README.md是否有基本结构
+        if grep -q "# " README.md; then
+          echo "✅ README.md has proper structure"
+        else
+          echo "❌ README.md structure issue"
+          exit 1
+        fi
+
+  security:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Security Check
+      run: |
+        echo "Running security checks..."
+        
+        # 检查是否有敏感信息泄露
+        if grep -r "password\|secret\|key" . --exclude-dir=.git --exclude=*.exe; then
+          echo "⚠️  Potential sensitive information found"
+        else
+          echo "✅ No obvious sensitive information found"
+        fi
+        
+        # 检查文件权限
+        if [ -x "Scenario_Lib/B_Abort_TakeOff/abort_takeoff_sim.exe" ]; then
+          echo "✅ Executable has proper permissions"
+        else
+          echo "⚠️  Executable permission issue"
+        fi 

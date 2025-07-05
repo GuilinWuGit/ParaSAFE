@@ -1,0 +1,25 @@
+# 控制器动作映射配置文件
+# 格式: 事件动作 = 控制器名称, 状态设置
+# 修改此文件后，重新运行程序即可生效
+
+# 油门控制动作
+START_THROTTLE_INCREASE = 油门增加, throttle_control_enabled=true
+STOP_THROTTLE_INCREASE = 油门增加, throttle_control_enabled=false
+START_THROTTLE_DECREASE = 油门减少, throttle_control_enabled=true
+STOP_THROTTLE_DECREASE = 油门减少, throttle_control_enabled=false
+
+# 刹车控制动作
+START_BRAKE = 刹车, cruise_control_enabled=false;brake_control_enabled=true
+STOP_BRAKE = 刹车, brake_control_enabled=false
+
+# 跑道巡航控制动作
+START_CRUISE = 跑道巡航, cruise_control_enabled=true
+STOP_CRUISE = 跑道巡航, cruise_control_enabled=false
+
+# 系统控制动作
+STOP_ALL_CONTROLLERS = STOP_ALL, 
+
+# 飞行模式切换
+SWITCH_TO_AUTO_MODE = MODE, flight_mode=AUTO
+SWITCH_TO_MANUAL_MODE = MODE, flight_mode=MANUAL
+SWITCH_TO_SEMI_AUTO_MODE = MODE, flight_mode=SEMI_AUTO 

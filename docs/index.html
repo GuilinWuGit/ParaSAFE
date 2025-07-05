@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ParaSAFE 文档中心</title>
+  <link rel="icon" href="https://cdn.jsdelivr.net/gh/your-username/ParaSAFE/logo.png">
+  <style>
+    body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; margin: 0; padding: 0; background: #f8f9fa; }
+    .container { max-width: 800px; margin: 60px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 40px 32px; }
+    h1 { color: #2c3e50; font-size: 2.5em; margin-bottom: 0.2em; }
+    h2 { color: #0078d7; margin-top: 1.5em; }
+    ul { line-height: 1.8; }
+    .nav { margin: 2em 0; }
+    .nav a { display: inline-block; margin: 0 1em 1em 0; padding: 0.6em 1.2em; background: #0078d7; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background 0.2s; }
+    .nav a:hover { background: #005fa3; }
+    .footer { margin-top: 3em; color: #888; font-size: 0.95em; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ParaSAFE 文档中心</h1>
+    <p>ParaSAFE 是新一代开源飞行仿真与安全验证平台，支持多机型、多场景、模块化扩展，广泛应用于航空、无人机、科研教学、工业安全等领域。</p>
+    <div class="nav">
+      <a href="使用者指南 user_guide/README.md">使用者指南</a>
+      <a href="开发者指南developer-guide/README.md">开发者指南</a>
+      <a href="商业化/README.md">商业化方案</a>
+      <a href="系统架构概览architecture/overview.md">系统架构</a>
+      <a href="ParaSAFE介绍 introduction/overview.md">项目介绍</a>
+    </div>
+    <h2>主要特性</h2>
+    <ul>
+      <li>热插拔模型架构，支持动力学/力学/飞行员/环境/机场/空管等自由组合</li>
+      <li>高性能多线程仿真，支持大规模批量仿真</li>
+      <li>丰富的接口与文档，易于二次开发和集成</li>
+      <li>开源社区驱动，快速迭代创新</li>
+      <li>支持多操作系统（Windows/Linux/macOS）</li>
+    </ul>
+    <h2>获取帮助</h2>
+    <ul>
+      <li>查阅 <a href="使用者指南 user_guide/faq.md">常见问题FAQ</a> 或 <a href="使用者指南 user_guide/README.md">使用者指南</a></li>
+      <li>访问 <a href="https://github.com/your-username/ParaSAFE" target="_blank">GitHub 仓库</a> 获取源码与社区支持</li>
+      <li>加入微信群/论坛参与讨论与反馈</li>
+    </ul>
+    <div class="footer">
+      &copy; 2024 ParaSAFE Project. Powered by Docsify. | <a href="https://github.com/your-username/ParaSAFE" target="_blank">GitHub</a>
+    </div>
+  </div>
+  <!-- Docsify will render markdown content here if enabled -->
+  <div id="app"></div>
+  <script>
+    // 自动跳转到 docsify 首页（如启用 docsify）
+    if (window.location.hash === '' && window.location.pathname.endsWith('index.html')) {
+      window.location.hash = '#/';
+    }
+  </script>
+</body>
+</html> 

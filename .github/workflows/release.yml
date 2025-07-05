@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Extract Version
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Release version: $VERSION"
+        
+    - name: Build Release
+      run: |
+        echo "Building release version..."
+        
+        # 构建所有场景
+        cd Scenario_Lib/B_Abort_TakeOff
+        g++ -std=c++17 -pthread -O2 -o abort_takeoff_sim.exe main.cpp
+        
+        # 检查构建结果
+        if [ -f "./abort_takeoff_sim.exe" ]; then
+          echo "✅ Abort takeoff scenario built successfully"
+        else
+          echo "❌ Build failed"
+          exit 1
+        fi
+        
+        # 创建发布目录
+        mkdir -p ../../release
+        cp abort_takeoff_sim.exe ../../release/
+        cp *.txt ../../release/ 2>/dev/null || true
+        cp *.hpp ../../release/ 2>/dev/null || true
+        
+    - name: Create Release Assets
+      run: |
+        # 创建发布包
+        cd release
+        tar -czf VFT-${{ steps.version.outputs.version }}-linux.tar.gz *
+        
+        # 创建Windows版本（如果需要）
+        # 这里可以添加Windows构建逻辑
+        
+        echo "Release assets created"
+        
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        # 生成发布说明
+        VERSION=${{ steps.version.outputs.version }}
+        
+        # 获取上次发布标签
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        if [ -n "$PREVIOUS_TAG" ]; then
+          # 生成变更日志
+          CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        else
+          # 首次发布
+          CHANGELOG=$(git log --pretty=format:"- %s" --reverse)
+        fi
+        
+        # 创建发布说明
+        cat > release_notes.md << EOF
+        # VFT $VERSION Release
+        
+        ## 🎉 What's New
+        
+        This release includes the following changes:
+        
+        $CHANGELOG
+        
+        ## 📦 Installation
+        
+        1. Download the release assets
+        2. Extract the archive
+        3. Run the simulation:
+           \`\`\`bash
+           ./abort_takeoff_sim.exe
+           \`\`\`
+        
+        ## 🔧 System Requirements
+        
+        - C++17 compatible compiler
+        - Linux/Windows/macOS
+        - 4GB RAM minimum
+        - 1GB disk space
+        
+        ## 📚 Documentation
+        
+        - [Installation Guide](https://your-username.github.io/VFT/getting-started/installation)
+        - [User Guide](https://your-username.github.io/VFT/user-guide/scenarios)
+        - [API Reference](https://your-username.github.io/VFT/developer-guide/api-reference)
+        
+        ## 🐛 Bug Reports
+        
+        If you encounter any issues, please report them on [GitHub Issues](https://github.com/your-username/VFT/issues)
+        
+        ## 🤝 Contributing
+        
+        We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+        EOF
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        release_name: VFT ${{ steps.version.outputs.version }}
+        body: ${{ steps.release_notes.outputs.release_notes }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./release/VFT-${{ steps.version.outputs.version }}-linux.tar.gz
+        asset_name: VFT-${{ steps.version.outputs.version }}-linux.tar.gz
+        asset_content_type: application/gzip
+        
+    - name: Update Documentation
+      run: |
+        # 更新文档中的版本信息
+        echo "Updating documentation..."
+        
+        # 更新README中的版本号
+        sed -i "s/Version: .*/Version: ${{ steps.version.outputs.version }}/" README.md 2>/dev/null || true
+        
+        # 创建版本历史文件
+        echo "# Version History" > VERSION_HISTORY.md
+        echo "" >> VERSION_HISTORY.md
+        echo "## ${{ steps.version.outputs.version }} - $(date +%Y-%m-%d)" >> VERSION_HISTORY.md
+        echo "" >> VERSION_HISTORY.md
+        echo "### Changes" >> VERSION_HISTORY.md
+        echo "${{ steps.release_notes.outputs.release_notes }}" >> VERSION_HISTORY.md
+        
+    - name: Notify Team
+      run: |
+        echo "Release ${{ steps.version.outputs.version }} has been published!"
+        echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}"
+        
+        # 这里可以添加通知逻辑，比如发送邮件或Slack消息
+        # curl -X POST -H 'Content-type: application/json' \
+        #   --data '{"text":"VFT ${{ steps.version.outputs.version }} has been released!"}' \
+        #   ${{ secrets.SLACK_WEBHOOK_URL }} 

@@ -1,0 +1,81 @@
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'docs/**', '.github/workflows/docs.yml' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ 'docs/**' ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Dependencies
+      run: |
+        npm install -g docsify-cli
+        
+    - name: Build Documentation
+      run: |
+        # 创建docsify配置
+        echo '# VFT Documentation' > docs/index.html
+        echo '' >> docs/index.html
+        echo '> Virtual Flight Training System Documentation' >> docs/index.html
+        echo '' >> docs/index.html
+        echo '- [Overview](introduction/overview.md)' >> docs/index.html
+        echo '- [Installation](getting-started/installation.md)' >> docs/index.html
+        echo '- [Architecture](architecture/overview.md)' >> docs/index.html
+        echo '- [Examples](examples/abort-takeoff.md)' >> docs/index.html
+        
+        # 创建docsify配置文件
+        cat > docs/_sidebar.md << EOF
+        * [Home](/)
+        * Getting Started
+          * [Overview](introduction/overview.md)
+          * [Installation](getting-started/installation.md)
+          * [First Scenario](getting-started/first-scenario.md)
+        * Architecture
+          * [Overview](architecture/overview.md)
+          * [Core Modules](architecture/core-modules.md)
+          * [Design Patterns](architecture/design-patterns.md)
+        * User Guide
+          * [Scenarios](user-guide/scenarios.md)
+          * [Configuration](user-guide/configuration.md)
+          * [Data Output](user-guide/data-output.md)
+        * Developer Guide
+          * [Environment](developer-guide/environment.md)
+          * [Code Structure](developer-guide/code-structure.md)
+          * [Adding Controllers](developer-guide/adding-controllers.md)
+          * [Adding Scenarios](developer-guide/adding-scenarios.md)
+          * [API Reference](developer-guide/api-reference.md)
+        * Technical
+          * [Performance](technical/performance.md)
+          * [Thread Safety](technical/thread-safety.md)
+          * [Real-time](technical/real-time.md)
+        * Troubleshooting
+          * [FAQ](troubleshooting/faq.md)
+          * [Error Codes](troubleshooting/error-codes.md)
+          * [Debugging](troubleshooting/debugging.md)
+        * Examples
+          * [Abort Takeoff](examples/abort-takeoff.md)
+          * [Controller Config](examples/controller-config.md)
+          * [Data Visualization](examples/data-visualization.md)
+        EOF
+        
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        force_orphan: true 
